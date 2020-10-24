@@ -1,4 +1,9 @@
 
+import { Dependency } from "./dependency";
+
+let dep = new Dependency();
+dep.test();
+
 class Test {
   static member: number = 1212;
   constructor () {
@@ -7,3 +12,4 @@ class Test {
 }
 
 console.log(Test.member);
+
