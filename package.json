@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "webpack, babel, and typescript template",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx webpack"
   },
   "keywords": [
     "webpack",
@@ -33,6 +33,5 @@
       "transform-class-properties",
       "@babel/plugin-transform-runtime"
     ]
-  },
-  "dependencies": {}
+  }
 }
