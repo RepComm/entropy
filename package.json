@@ -33,5 +33,13 @@
       "transform-class-properties",
       "@babel/plugin-transform-runtime"
     ]
+  },
+  "dependencies": {
+    "@enable3d/ammo-physics": "^0.22.0",
+    "@repcomm/exponent-ts": "^1.1.4",
+    "@repcomm/gameinput-ts": "^1.10.4",
+    "@repcomm/three.lookcamera": "^1.0.4",
+    "@types/three": "^0.127.1",
+    "enable3d": "^0.22.0"
   }
 }
