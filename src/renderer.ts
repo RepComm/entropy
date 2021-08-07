@@ -1,12 +1,13 @@
 
 import { THREE } from "enable3d";
 import { AmmoPhysics, ExtendedObject3D } from "@enable3d/ammo-physics";
-import { Panel } from "@repcomm/exponent-ts";
+import { Exponent, Panel } from "@repcomm/exponent-ts";
 import { Canvas } from "./canvas";
 import { LookCamera } from "@repcomm/three.lookcamera";
 import { GLTFInstancer, loadGLTF } from "./gltf";
 import { GameInput } from "@repcomm/gameinput-ts";
 import { Helicopter } from "./helicopter";
+import { CurveEditor } from "./components/curveeditor";
 
 /**Holds info on a scene, its physics, and the camera rendering it
  * stfu, i know there can be multiple cameras.
@@ -15,9 +16,11 @@ export interface MetaScene {
   scene?: THREE.Scene;
   physics?: AmmoPhysics;
   camera?: THREE.PerspectiveCamera;
+  audio?: AudioContext;
 }
 
 const TEST_SCENE = new GLTFInstancer("./resources/test.glb");
+const SPAWN_PAD = new GLTFInstancer("./resources/spawn-pad.glb");
 
 export class Renderer extends Panel {
   private canvas: Canvas;
@@ -27,10 +30,20 @@ export class Renderer extends Panel {
   private defaultMetaScene: MetaScene;
   private currentMetaScene: MetaScene;
 
+  private uiOverlay: Exponent;
+
   constructor() {
     super();
 
     this.canvas = new Canvas()
+      .mount(this);
+
+    this.uiOverlay = new Exponent()
+      .make("div")
+      .applyRootClasses()
+      .setStyleItem("position", "absolute")
+      .setStyleItem("width", "100%")
+      .setStyleItem("height", "100%")
       .mount(this);
 
     // this.canvasCtx = this.canvas.element.getContext("webgl");
@@ -54,12 +67,17 @@ export class Renderer extends Panel {
 
     this.defaultMetaScene = {};
 
-    scene.add(new THREE.HemisphereLight(0xffffbb, 0x080820, 1));
-    scene.add(new THREE.AmbientLight(0x666666));
+    // scene.add(new THREE.HemisphereLight(0xffffbb, 0x080820, 1));
+    scene.add(new THREE.AmbientLight(0xFFFFFF));
 
-    const light = new THREE.DirectionalLight(0xdfebff, 1);
-    light.position.set(50, 200, 100);
-    light.position.multiplyScalar(1.3);
+    const light = new THREE.DirectionalLight(0xffffff, 2);
+    light.position.set(1, 1, 1);
+
+
+    //create audio context
+    this.defaultMetaScene.audio = new AudioContext({
+
+    });
 
     this.defaultMetaScene.scene = scene;
 
@@ -70,33 +88,45 @@ export class Renderer extends Panel {
 
     //objects stuff
     let helicopter = new Helicopter(this.defaultMetaScene);
+    helicopter.getControls().mount(this.uiOverlay);
+
+    let curveEditor = new CurveEditor();
+    curveEditor.mount(this.uiOverlay);
 
     physics.add.box(
       { x: 0, y: 10, z: 0, width: 1, height: 1, depth: 1, mass: 1, collisionFlags: 0 },
       { lambert: { color: 'red', transparent: true, opacity: 0.5 } }
     );
 
-    
-    TEST_SCENE.getInstance().then((test)=>{
+
+    TEST_SCENE.getInstance().then((test) => {
       let ground = test.scene.getObjectByName("ground") as ExtendedObject3D;
-      ground.position.set(0, -10, 0);
+      // ground.position.set(0, -10, 0);
       physics.add.existing(ground, {
         collisionFlags: 1,
         shape: "plane",
       });
       this.defaultMetaScene.scene.add(ground);
     });
-    
-    // let groundWidth = 100;
-    // let groundDepth = 100;
-    // physics.add.ground({
-    //   collisionFlags: 1,
-    //   width: groundWidth / 2,
-    //   height: groundDepth / 2,
-    //   x: 0,
-    //   y: -5,
-    //   z: 0,
-    // });
+
+    SPAWN_PAD.getInstance().then((gltf) => {
+      let spawnpad = gltf.scene.getObjectByName("spawn-pad") as ExtendedObject3D;
+      physics.add.existing(spawnpad, {
+        collisionFlags: 1,
+        shape: "hull",
+      });
+      this.defaultMetaScene.scene.add(spawnpad);
+    });
+
+    SPAWN_PAD.getInstance().then((gltf) => {
+      let spawnpad = gltf.scene.getObjectByName("spawn-pad") as ExtendedObject3D;
+      spawnpad.position.set(10, 0, 10);
+      physics.add.existing(spawnpad, {
+        collisionFlags: 1,
+        shape: "hull",
+      });
+      this.defaultMetaScene.scene.add(spawnpad);
+    });
 
     lookcam = new LookCamera({
       far: 1000
@@ -123,7 +153,7 @@ export class Renderer extends Panel {
 
     let physicsFps = 30;
     let physicsLast = 0;
-    let physicsTargetDelta = 1000/physicsFps;
+    let physicsTargetDelta = 1000 / physicsFps;
     let physicsEnlapsed = 0;
 
     //frame animation iteration
@@ -141,7 +171,7 @@ export class Renderer extends Panel {
 
       if (!input.raw.pointerIsLocked()) {
         if (input.raw.getPointerButton(0)) {
-          input.raw.pointerTryLock(this.canvas.element);
+          //input.raw.pointerTryLock(this.canvas.element);
         }
         lookcam.setLookEnabled(false);
       } else {
@@ -155,7 +185,7 @@ export class Renderer extends Panel {
         mx,
         my
       );
-      
+
       physicsEnlapsed += delta;
       if (physicsEnlapsed >= physicsTargetDelta) {
         physicsEnlapsed = 0;
