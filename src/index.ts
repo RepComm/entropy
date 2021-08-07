@@ -56,8 +56,8 @@ const STYLES = new Style()
 .curveeditor {
 	min-width: 10em;
 	min-height: 10em;
-	max-width: 100%;
-	max-height: 100%;
+	max-width: 10em;
+	max-height: 10em;
 	background-color: #282828;
 	border-radius: 1em;
 	margin: 1em;
@@ -70,6 +70,10 @@ const STYLES = new Style()
 	cursor: pointer;
 	background-color: #343839;
 	border-radius: 1em;
+	min-width: 10em;
+	min-height: 10em;
+	max-width: 10em;
+	max-height: 10em;
 }
 .no-select {
   -webkit-touch-callout: none; /* iOS Safari */

@@ -30,6 +30,8 @@ export class Curve {
   private p_ab: vertex;
   private p_bc: vertex;
 
+  private temp: vertex;
+
   constructor (a: vertex, b: vertex, c: vertex) {
     this.a = a;
     this.b = b;
@@ -37,6 +39,8 @@ export class Curve {
 
     this.p_ab = createVertex(0, 0);
     this.p_bc = createVertex(0, 0);
+
+    this.temp = createVertex(0, 0);
   }
   getPoint (t: number, out: vertex) {
     //get point along line ab by interpolant t
@@ -48,6 +52,10 @@ export class Curve {
     //get point along line create by above two points, by interpolant t
     //this is the point along the curve abc by interpolant t
     line_lerp(this.p_ab, this.p_bc, t, out);
+  }
+  getY (t: number): number {
+    this.getPoint(t, this.temp);
+    return this.temp.y;
   }
 }
 

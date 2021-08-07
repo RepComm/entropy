@@ -1,4 +1,9 @@
 
+import { get } from "@repcomm/exponent-ts";
+import { CurveEditor } from "../components/curveeditor";
+import { Renderer } from "../renderer";
+import { createVertex, Curve } from "../utils/curve";
+
 function loadAudioFile (url: string, ctx: AudioContext): Promise<AudioBuffer> {
   return new Promise(async (_resolve, _reject)=>{
     try {
@@ -22,11 +27,25 @@ export class AudioHelicopter {
   private rpmVolumeMod: GainNode;
   private rpmVolumeOut: GainNode;
 
+  private rpmVolumeOutCurve: Curve;
+  private rpmVolumeOutCurveEditor: CurveEditor;
+
   private _rpm: number;
   private _bladeCount: number;
   private _maxRpm: number;
 
   constructor (ctx: AudioContext) {
+    this.rpmVolumeOutCurve = new Curve(
+      createVertex(0, 0),
+      createVertex(0.5, 0),
+      createVertex(1, 1)
+    );
+
+    this.rpmVolumeOutCurveEditor = new CurveEditor( this.rpmVolumeOutCurve );
+    setTimeout(()=>{
+      this.rpmVolumeOutCurveEditor.mount( get("ui") );
+    }, 1000);
+
     this.bladeCount = 4;
     this.maxRpm = 50;
 
@@ -68,7 +87,10 @@ export class AudioHelicopter {
     this._rpm = v;
 
     this.rpmOscillator.frequency.value = this._rpm / this._bladeCount;
-    this.rpmVolumeOut.gain.value = this._rpm / this._maxRpm;
+    this.rpmVolumeOut.gain.value = this.calculateVolumeOutGain();
+  }
+  calculateVolumeOutGain () {
+    return this.rpmVolumeOutCurve.getY(this._rpm / this._maxRpm);
   }
   set maxRpm (v: number) {
     this._maxRpm = v;
@@ -79,7 +101,7 @@ export class AudioHelicopter {
 
     this.rpmOscillator.frequency.setTargetAtTime(rpm * this._bladeCount, startMillis, 1);
 
-    this.rpmVolumeOut.gain.setTargetAtTime(rpm * this._rpm / this._maxRpm, startMillis, 1);
+    this.rpmVolumeOut.gain.setTargetAtTime(this.calculateVolumeOutGain(), startMillis, 1);
 
     setTimeout(()=>{
       this._rpm = rpm;

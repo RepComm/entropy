@@ -23,6 +23,8 @@ const TEST_SCENE = new GLTFInstancer("./resources/test.glb");
 const SPAWN_PAD = new GLTFInstancer("./resources/spawn-pad.glb");
 
 export class Renderer extends Panel {
+  static SINGLETON: Renderer;
+
   private canvas: Canvas;
 
   private threeRenderer: THREE.WebGLRenderer;
@@ -31,6 +33,9 @@ export class Renderer extends Panel {
   private currentMetaScene: MetaScene;
 
   private uiOverlay: Exponent;
+  getUI (): Exponent {
+    return this.uiOverlay;
+  }
 
   constructor() {
     super();
@@ -40,13 +45,12 @@ export class Renderer extends Panel {
 
     this.uiOverlay = new Exponent()
       .make("div")
+      .setId("ui")
       .applyRootClasses()
       .setStyleItem("position", "absolute")
       .setStyleItem("width", "100%")
       .setStyleItem("height", "100%")
       .mount(this);
-
-    // this.canvasCtx = this.canvas.element.getContext("webgl");
 
     this.threeRenderer = new THREE.WebGLRenderer({
       alpha: false,
@@ -89,9 +93,6 @@ export class Renderer extends Panel {
     //objects stuff
     let helicopter = new Helicopter(this.defaultMetaScene);
     helicopter.getControls().mount(this.uiOverlay);
-
-    let curveEditor = new CurveEditor();
-    curveEditor.mount(this.uiOverlay);
 
     physics.add.box(
       { x: 0, y: 10, z: 0, width: 1, height: 1, depth: 1, mass: 1, collisionFlags: 0 },

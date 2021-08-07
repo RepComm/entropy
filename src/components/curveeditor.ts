@@ -43,8 +43,8 @@ export class CurveEditor extends Panel {
     CurveEditor.canvas.width = 32;
     CurveEditor.canvas.style.position = "absolute";
     CurveEditor.canvas.style.zIndex = "-1";
-    CurveEditor.canvas.style.minWidth = "0%";
-    CurveEditor.canvas.style.minHeight = "0%";
+    CurveEditor.canvas.style.minWidth = "100%";
+    CurveEditor.canvas.style.minHeight = "100%";
     
     CurveEditor.canvas.style.maxWidth = "100%";
     CurveEditor.canvas.style.maxHeight = "100%";
@@ -70,10 +70,14 @@ export class CurveEditor extends Panel {
     return CurveEditor.ctx;
   }
 
-  constructor() {
+  constructor(curve: Curve = undefined) {
     super();
     this.addClasses("curveeditor");
-    this.needsRender = true;
+    
+    setTimeout(()=>{
+      this.needsRender = true;
+    }, 2000);
+
     this.renderedTouchPoint = createVertex(0,0);
     this.normalizedTouchPoint = createVertex(0,0);
     this.isTouched = false;
@@ -97,7 +101,7 @@ export class CurveEditor extends Panel {
       })
       .mount(this);
 
-    this.curve = new Curve(
+    this.curve = curve || new Curve(
       createVertex(0, 0),
       createVertex(0.5, 1),
       createVertex(1, 1)
