@@ -13,17 +13,18 @@ interface DisplayResolverInfo {
   unique: boolean;
 }
 
-const HelicopterGLTF = new GLTFInstancer("./resources/helicopter.glb");
+// const HelicopterGLTF = new GLTFInstancer("./resources/helicopter.glb");
+const HelicopterWolfGLTF = new GLTFInstancer("./resources/helicopter-wolf.glb");
 
 const input = GameInput.get();
 
-const DefaultMaxRotorThrust = 50;
+const DefaultMaxRotorThrust = 80;
 
 const DefaultRotorThrustIncrement = 0.5;
 
 const DefaultMaxSteerForce = 10;
 const DefaultHullMass = 10;
-const DefaultMaxForwardForce = 50;
+const DefaultMaxForwardForce = 80;
 
 const RotorMaxThrustRPM = 4;
 
@@ -37,7 +38,8 @@ export class Helicopter {
   private mixer: THREE.AnimationMixer;
   private hull: ExtendedMesh;
 
-  private cameraAttachPoint: THREE.Group;
+  private cameraAttachPoint: THREE.Object3D;
+  private cameraLookTarget: THREE.Object3D;
 
   private maxRotorThrust: Ctrl;
   private rotorThrust: Ctrl;
@@ -82,10 +84,11 @@ export class Helicopter {
 
     this.metaScene = metaScene;
 
-    this.cameraAttachPoint = new THREE.Group();
-    this.cameraAttachPoint.position.set(0, 10, 20);
+    this.cameraAttachPoint = new THREE.Object3D();
+    this.cameraLookTarget = new THREE.Object3D();
 
-    HelicopterGLTF.getInstance().then((instance) => {
+    // HelicopterGLTF.getInstance().then((instance) => {
+    HelicopterWolfGLTF.getInstance().then((instance) => {
       this.instanceGLTF = instance;
 
       this.mixer = new THREE.AnimationMixer(this.instanceGLTF.scene);
@@ -96,20 +99,30 @@ export class Helicopter {
 
       this.mixer.timeScale = 0.01;
 
-      let hull = instance.scene.getObjectByName("hull");
-      hull.add(this.cameraAttachPoint);
-      hull.position.set(0, 2, 0);
+      let collision = instance.scene.getObjectByName("collision");
+      collision.visible = false;
+      let root = instance.scene.getObjectByName("root");
+      root.position.set(0, 10, 0);
+
+      let cameraAttachThirdPerson = instance.scene.getObjectByName("camera-third-person");
+      let cameraAttachFirstPerson = instance.scene.getObjectByName("camera-first-person");
+      cameraAttachThirdPerson.add(this.cameraAttachPoint);
+      // cameraAttachFirstPerson.add(this.cameraAttachPoint);
+
       this.metaScene.physics.add.existing(
-        hull as any,
+        root as any,
         {
-          shape: 'box',
+          shape: "box",
           // autoCenter: true,
           collisionFlags: 0,
           mass: DefaultHullMass,
-          addChildren: false
+          addChildren: true
         }
       );
-      this.hull = hull as any;
+      this.hull = root as any;
+      this.hull.add( this.cameraLookTarget );
+
+      // this.hull = collision as any;
 
       this.metaScene.scene.add(instance.scene);
       this._isReady = true;
@@ -121,8 +134,11 @@ export class Helicopter {
     return this.controls;
   }
 
-  getCameraAttachPoint(): THREE.Group {
+  getCameraAttachPoint(): THREE.Object3D {
     return this.cameraAttachPoint;
+  }
+  getCameraLookTarget (): THREE.Object3D {
+    return this.cameraLookTarget;
   }
 
   update(delta: number) {

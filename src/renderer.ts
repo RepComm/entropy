@@ -2,12 +2,13 @@
 import { THREE } from "enable3d";
 import { AmmoPhysics, ExtendedObject3D } from "@enable3d/ammo-physics";
 import { Exponent, Panel } from "@repcomm/exponent-ts";
-import { Canvas } from "./canvas";
+import { Canvas } from "./components/canvas";
 import { LookCamera } from "@repcomm/three.lookcamera";
 import { GLTFInstancer, loadGLTF } from "./gltf";
 import { GameInput } from "@repcomm/gameinput-ts";
 import { Helicopter } from "./helicopter";
 import { CurveEditor } from "./components/curveeditor";
+import { FlowCameraController } from "./controllers/flowcamera";
 
 /**Holds info on a scene, its physics, and the camera rendering it
  * stfu, i know there can be multiple cameras.
@@ -58,6 +59,7 @@ export class Renderer extends Panel {
       canvas: this.canvas.element,
       depth: true
     });
+    this.threeRenderer.setClearColor(0x99ddff);
 
     this.threeRenderer.setPixelRatio(1)
 
@@ -65,8 +67,6 @@ export class Renderer extends Panel {
       this.notifyScreenResized();
     });
 
-    //create default scene things (in an anonymous function to avoid polluting scope with junk variables)
-    let lookcam: LookCamera;
     let scene = new THREE.Scene();
 
     this.defaultMetaScene = {};
@@ -76,7 +76,7 @@ export class Renderer extends Panel {
 
     const light = new THREE.DirectionalLight(0xffffff, 2);
     light.position.set(1, 1, 1);
-
+    scene.add(light);
 
     //create audio context
     this.defaultMetaScene.audio = new AudioContext({
@@ -129,15 +129,22 @@ export class Renderer extends Panel {
       this.defaultMetaScene.scene.add(spawnpad);
     });
 
-    lookcam = new LookCamera({
-      far: 1000
-    });
+    // let lookcam: LookCamera;
+    // lookcam = new LookCamera({
+    //   far: 1000
+    // });
+    let flowCam = new FlowCameraController();
+    let camera = new THREE.PerspectiveCamera(75, 1, 0.01, 1000);
+    scene.add(camera);
+    flowCam.attachCamera(camera);
+    flowCam.setLookTarget(helicopter.getCameraLookTarget());
+    flowCam.setAttachPoint(helicopter.getCameraAttachPoint());
 
-    helicopter.getCameraAttachPoint().add(lookcam);
+    // helicopter.getCameraAttachPoint().add(lookcam);
     // scene.add(lookcam as any);
     // lookcam.position.set(0, 10, 20);
 
-    this.defaultMetaScene.camera = lookcam.getCamera() as any;
+    this.defaultMetaScene.camera = camera;//lookcam.getCamera() as any;
 
     //set the current scene
     this.currentMetaScene = this.defaultMetaScene;
@@ -162,6 +169,8 @@ export class Renderer extends Panel {
       let delta = now - last;
       let deltaSeconds = delta / 1000;
 
+      flowCam.update();
+
       //animation
       helicopter.update(delta);
       //player controls
@@ -174,18 +183,18 @@ export class Renderer extends Panel {
         if (input.raw.getPointerButton(0)) {
           //input.raw.pointerTryLock(this.canvas.element);
         }
-        lookcam.setLookEnabled(false);
+        // lookcam.setLookEnabled(false);
       } else {
-        lookcam.setLookEnabled(true);
+        // lookcam.setLookEnabled(true);
       }
 
       let mx = input.builtinMovementConsumer.getDeltaX();
       let my = input.builtinMovementConsumer.getDeltaY();
       // console.log(mx, my);
-      lookcam.addRotationInput(
-        mx,
-        my
-      );
+      // lookcam.addRotationInput(
+      //   mx,
+      //   my
+      // );
 
       physicsEnlapsed += delta;
       if (physicsEnlapsed >= physicsTargetDelta) {
